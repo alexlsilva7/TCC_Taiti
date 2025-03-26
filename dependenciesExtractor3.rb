@@ -173,90 +173,73 @@ def clean_string(testi)
   return final_string
 end
 
-def calc_metrics(taski, testi)
-  list_testi = testi.split(',')
-  list_taski = taski.split(',')
-  intersessao = 0
-  list_testi.length.times do |k|
-    if(list_taski.include?(list_testi[k]))
-      intersessao += 1
-    end
-  end
-  precision = intersessao.to_f / list_testi.length
-  recall = intersessao.to_f / list_taski.length
-  f2 = 0
-  if (precision + recall) != 0
-    f2 = (5 * precision * recall).to_f / ((4 * precision) + recall)
-  end
-  return [precision.round(2), recall.round(2), f2.round(2)]
-end
+def main
 
-def main(taiti_result, task_csv)
+  task_data = {
+    'REPO_URL' => 'https://github.com/BTHUNTERCN/bsmi.git',
+    'TASK_ID' => '31',
+    'LAST' => 'd8437823ff9e718c172088a9bbc508d4ec58d34c',
+    # Adicione outros campos necessários do tasks_taiti.csv aqui
+  }
+
+  taiti_data = {
+    'Project' => 'https://github.com/BTHUNTERCN/bsmi',
+    'Task' => '31',
+    'Changed files' => '[app/assets/javascripts/mentor_teacher/schedules.js, app/models/timeslot.rb, app/views/mentor_teacher/schedules/_week_calendar.html.haml, app/controllers/mentor_teacher/schedules_controller.rb, app/assets/stylesheets/mentor_teacher/schedules.css.scss, app/helpers/mentor_teacher/schedules_helper.rb, app/views/mentor_teacher/schedules/edit_or_new.html.haml, app/views/mentor_teacher/schedules/show.html.haml, spec/controllers/mentor_teacher/schedules_controller_spec.rb, features/mentor_teacher_schedule.feature, features/step_definitions/bsmi_steps.rb, spec/factories/timeslot.rb, app/models/mentor_teacher.rb, spec/factories/cal_courses.rb, spec/models/mentor_teacher_spec.rb, app/controllers/cal_courses_controller.rb]',
+    'TestI' => '[app/controllers/mentor_teacher/schedules_controller.rb, app/controllers/user_sessions_controller.rb, app/helpers/mentor_teacher/schedules_helper.rb, app/models/timeslot.rb, app/models/user_session.rb, app/views/mentor_teacher/schedules/_form.html.haml, app/views/mentor_teacher/schedules/new.html.haml, app/views/user_sessions/new.html.haml, app/views/user_sessions/shared/_error_messages.html.erb]'
+  }
+
   # Criar estrutura de diretórios se não existir
   FileUtils.mkdir_p('TestInterfaceEvaluation/spg_repos') unless Dir.exist?('TestInterfaceEvaluation/spg_repos')
   
-  table_taiti = CSV.parse(File.read(taiti_result), headers: true)
-  table_task = CSV.parse(File.read(task_csv), headers: true)
-  #TODO Checar se arquivo existe, caso exista limpar ele antes de escrever para não pegar lixo junto
   CSV.open("testidep.csv", "wb") do |csv|
-    csv << (table_taiti.headers + [ 'TestIDep', 'PrecisionI', 'RecallI', 'F2I', 'PrecisionDep', 'RecallDep','F2Dep' ])
-    table_taiti.each.with_index do |row, i|
-      begin
-        name = table_task[i]['REPO_URL'].split('/')[-1][0..-5]
-        $log.debug{'Executing Code to Get All Dependencies of Repo:' + name}
-        dir = 'TestInterfaceEvaluation/spg_repos/' + name
-        if(Dir.exist?(dir))
-          begin
-            git = Git.open(dir)
-          rescue ArgumentError => e
-            $log.error{"Erro ao abrir repositório: #{e.message}"}
-            FileUtils.rm_rf(dir) if Dir.exist?(dir)
-            git = Git.clone(table_task[i]['REPO_URL'], name, path: 'TestInterfaceEvaluation/spg_repos')
-          end
-        else
-          git = Git.clone(table_task[i]['REPO_URL'], name, path: 'TestInterfaceEvaluation/spg_repos')
-          #Needed for git windows, some cases may cause bug for checkout
-          git.config('core.protectNTFS', 'false')
-        end
-        
+    csv << ['Project', 'Task', 'Changed files', 'TestI', 'TestIDep']
+    
+    begin
+      name = task_data['REPO_URL'].split('/')[-1][0..-5]
+      $log.debug{"Processing repository: #{name}"}
+      dir = 'TestInterfaceEvaluation/spg_repos/' + name
+
+      if Dir.exist?(dir)
         begin
-          git.checkout(table_task[i]['LAST'])
-          
-          current_path = Dir.pwd + '/'+dir + '/'
-          testi = add_home_path(current_path, table_taiti[i]['TestI'])
-          testi_string = table_taiti[i]['TestI'][1..-2]
-          all_dependencies = DependenciesExtractor.new.get_all_dependencies(current_path, testi)
-          if all_dependencies != ""
-            resultado = '[' + table_taiti[i]['TestI'][1..-2] + ','+all_dependencies + ']'
-          else
-            $log.warn "Todas as Dependencias vazias ID: " + table_taiti[i]['Task']
-            resultado = '[' + table_taiti[i]['TestI'][1..-2] + ']'
-          end
-          cleaned_testi = clean_string(table_taiti[i]['TestI'])
-          cleaned_testdep = clean_string(resultado)
-          cleaned_changed = clean_string(table_taiti[i]['Changed files'])
-          metrics_testi = calc_metrics(cleaned_changed, cleaned_testi)
-          precisioni = metrics_testi[0]
-          recalli = metrics_testi[1]
-          f2i = metrics_testi[2]
-          metrics_testdep = calc_metrics(cleaned_changed, cleaned_testdep)
-          precisiondep = metrics_testdep[0]
-          recalldep = metrics_testdep[1]
-          f2dep = metrics_testdep[2]
-          csv << (row.fields + [ resultado, precisioni, recalli, f2i, precisiondep, recalldep, f2dep ])
-        rescue Git::GitExecuteError => e
-          $log.error{"Erro ao fazer checkout: #{e.message}"}
-          # Adiciona uma linha vazia ou com informação de erro no CSV
-          csv << (row.fields + [ "ERRO", 0, 0, 0, 0, 0, 0 ])
+          git = Git.open(dir)
+        rescue ArgumentError => e
+          FileUtils.rm_rf(dir)
+          git = Git.clone(task_data['REPO_URL'], name, path: 'TestInterfaceEvaluation/spg_repos')
         end
-      rescue => e
-        $log.error{"Erro geral: #{e.message}"}
-        csv << (row.fields + [ "ERRO GERAL", 0, 0, 0, 0, 0, 0 ])
+      else
+        git = Git.clone(task_data['REPO_URL'], name, path: 'TestInterfaceEvaluation/spg_repos')
+        git.config('core.protectNTFS', 'false')
       end
+
+      begin
+        git.checkout(task_data['LAST'])
+        
+        current_path = File.join(Dir.pwd, dir, '/')
+        testi = add_home_path(current_path, taiti_data['TestI'])
+        
+        dependencies = DependenciesExtractor.new.get_all_dependencies(current_path, testi)
+        resultado = dependencies.empty? ? taiti_data['TestI'] : "#{taiti_data['TestI'][0...-1]},#{dependencies}]"
+
+        csv << [
+          taiti_data['Project'],
+          taiti_data['Task'],
+          taiti_data['Changed files'],
+          taiti_data['TestI'],
+          resultado
+        ]
+
+      rescue Git::GitExecuteError => e
+        $log.error{"Checkout error: #{e.message}"}
+        csv << [taiti_data['Project'], taiti_data['Task'], 'ERROR', 'ERROR', 'ERROR']
+      end
+    rescue => e
+      $log.error{"General error: #{e.message}"}
+      csv << [taiti_data['Project'], taiti_data['Task'], 'ERROR', 'ERROR', 'ERROR']
     end
   end
 end
 
 if __FILE__ == $PROGRAM_NAME
-  main(ARGV[0], ARGV[1])
+  main
 end
