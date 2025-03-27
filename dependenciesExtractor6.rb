@@ -24,15 +24,10 @@ class DependenciesExtractor
     return rubrowser_output
   end
 
-  # REMOVIDO: extract(output_path)
-  # REMOVIDO: process()
-
-  # Modificado para receber json_data (Hash)
   def find_all_relations(project_path, json_data, file_paths)
     response = ''
     file_path_arr = file_paths.split(",")
 
-    # Verifica se json_data é válido (Hash não vazio)
     unless json_data.is_a?(Hash) && (!json_data['definitions'].nil? || !json_data['relations'].nil?)
         puts "Error: Invalid or empty JSON data provided to find_all_relations."
         return ""
@@ -55,7 +50,6 @@ class DependenciesExtractor
     return response.chomp(',').split(',').uniq.join(",")
   end
 
-  # Modificado para receber json_data (Hash)
   def find_formated_relations(project_path, json_data, file_path)
     relations = find_relations(json_data, file_path) # Passa json_data
     response = ''
@@ -108,7 +102,6 @@ class DependenciesExtractor
     response
   end
 
-  # Modificado para receber json_data (Hash)
   def find_relations(json_data, file_path)
     dep = Hash.new
     search_file_norm = file_path.gsub(/\\|\//, '').downcase
@@ -126,7 +119,6 @@ class DependenciesExtractor
     dep.empty? ? 'Not found' : dep
   end
 
-  # Modificado para receber json_data (Hash)
   def find_definition(json_data, search_param, attribute)
     dep = Hash.new
     search_param_norm = search_param.to_s.gsub(/\\|\//, '').downcase
@@ -146,7 +138,6 @@ class DependenciesExtractor
     dep.empty? ? 'Not found' : dep
   end
 
-  # Modificado: Orquestra a captura, extração, parse e busca de relações.
   def get_all_dependencies(project_path, file_paths)
     # 1. Executa rubrowser --json e captura a saída bruta
     begin
@@ -188,7 +179,6 @@ class DependenciesExtractor
   end
 end
 
-# add_home_path permanece igual
 def add_home_path(home_path, testi_array)
   testi_array.map do |file_path|
     cleaned_path = file_path.strip
@@ -197,7 +187,6 @@ def add_home_path(home_path, testi_array)
 end
 
 def main
-  # --- CONFIGURAÇÃO ---
   local_project_path = "/home/alex/Área de trabalho/TCC_Taiti_LINUX_TEST/TestInterfaceEvaluation/spg_repos/bsmi" # <--- MUDE SE NECESSÁRIO
 
   unless Dir.exist?(local_project_path)
@@ -220,7 +209,6 @@ def main
     ]
   }
 
-  # --- EXECUÇÃO ---
   begin
     current_path = local_project_path
     puts "Analisando projeto local em: #{current_path}"
