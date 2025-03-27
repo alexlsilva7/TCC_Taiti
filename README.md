@@ -1,6 +1,26 @@
 <h1 align="center">TCC Taiti</h1>
 <p align="center">Projeto para receber saída de Taiti e encontrar as dependências estáticas</p>
 
+---
+
+**🚀 VERSÃO REATORADA DISPONÍVEL! 🚀**
+
+**Existe uma versão mais nova, rápida e simplificada deste script!**
+
+A versão refatorada (`dependenciesExtractor_refactored.rb`):
+
+*   **Executa diretamente em projetos locais:** Não precisa mais clonar via Git.
+*   **Usa argumentos de linha de comando:** Não depende mais de arquivos CSV para entrada.
+*   **Mais Rápida:** Utiliza `rubrowser --json` e processamento em memória, eliminando arquivos intermediários.
+*   **Dependências Simplificadas:** Requer apenas a gem `rubrowser`.
+*   **Funciona em versões mais novas do Ruby:** Compatível com Ruby 3.3.0 e superior.
+
+**É fortemente recomendado usar a versão refatorada para novas análises.**
+
+➡️ **Consulte o arquivo `README_REFACTOR.md` para instruções de uso e detalhes da nova versão.**
+
+---
+
 ### Pré-requisitos
 
 Ruby version: 2.1.0 or higher<br/>
