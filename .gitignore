@@ -1,5 +1,8 @@
 *.gem
 *.rbc
 /tmp/
-testidep.csv
+# testidep.csv
 # .env
+TestInterfaceEvaluation/output.html
+TestInterfaceEvaluation/
+.idea/
