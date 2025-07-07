@@ -173,24 +173,6 @@ def clean_string(testi)
   return final_string
 end
 
-def calc_metrics(taski, testi)
-  list_testi = testi.split(',')
-  list_taski = taski.split(',')
-  intersessao = 0
-  list_testi.length.times do |k|
-    if(list_taski.include?(list_testi[k]))
-      intersessao += 1
-    end
-  end
-  precision = intersessao.to_f / list_testi.length
-  recall = intersessao.to_f / list_taski.length
-  f2 = 0
-  if (precision + recall) != 0
-    f2 = (5 * precision * recall).to_f / ((4 * precision) + recall)
-  end
-  return [precision.round(2), recall.round(2), f2.round(2)]
-end
-
 def main(taiti_result, task_csv)
   # Criar estrutura de diretórios se não existir
   FileUtils.mkdir_p('TestInterfaceEvaluation/spg_repos') unless Dir.exist?('TestInterfaceEvaluation/spg_repos')
@@ -199,7 +181,7 @@ def main(taiti_result, task_csv)
   table_task = CSV.parse(File.read(task_csv), headers: true)
   #TODO Checar se arquivo existe, caso exista limpar ele antes de escrever para não pegar lixo junto
   CSV.open("testidep.csv", "wb") do |csv|
-    csv << (table_taiti.headers + [ 'TestIDep', 'PrecisionI', 'RecallI', 'F2I', 'PrecisionDep', 'RecallDep','F2Dep' ])
+    csv << (table_taiti.headers + ['TestIDep']) 
     table_taiti.each.with_index do |row, i|
       begin
         name = table_task[i]['REPO_URL'].split('/')[-1][0..-5]
@@ -232,26 +214,15 @@ def main(taiti_result, task_csv)
             $log.warn "Todas as Dependencias vazias ID: " + table_taiti[i]['Task']
             resultado = '[' + table_taiti[i]['TestI'][1..-2] + ']'
           end
-          cleaned_testi = clean_string(table_taiti[i]['TestI'])
-          cleaned_testdep = clean_string(resultado)
-          cleaned_changed = clean_string(table_taiti[i]['Changed files'])
-          metrics_testi = calc_metrics(cleaned_changed, cleaned_testi)
-          precisioni = metrics_testi[0]
-          recalli = metrics_testi[1]
-          f2i = metrics_testi[2]
-          metrics_testdep = calc_metrics(cleaned_changed, cleaned_testdep)
-          precisiondep = metrics_testdep[0]
-          recalldep = metrics_testdep[1]
-          f2dep = metrics_testdep[2]
-          csv << (row.fields + [ resultado, precisioni, recalli, f2i, precisiondep, recalldep, f2dep ])
+          csv << (row.fields + [resultado]) 
         rescue Git::GitExecuteError => e
           $log.error{"Erro ao fazer checkout: #{e.message}"}
           # Adiciona uma linha vazia ou com informação de erro no CSV
-          csv << (row.fields + [ "ERRO", 0, 0, 0, 0, 0, 0 ])
+          csv << (row.fields + ["ERRO"])
         end
       rescue => e
         $log.error{"Erro geral: #{e.message}"}
-        csv << (row.fields + [ "ERRO GERAL", 0, 0, 0, 0, 0, 0 ])
+        csv << (row.fields + ["ERRO GERAL"])
       end
     end
   end
